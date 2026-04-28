@@ -1,0 +1,23 @@
+# Java编译产物
+*.class
+*.jar
+*.war
+build/
+bin/
+target/
+out/
+
+# IDE配置
+.idea/
+*.iml
+.vscode/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 依赖包（如果需要单独管理）
+lib/
