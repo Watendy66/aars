@@ -462,7 +462,7 @@ public class FilenameFinder {
         // User provides descriptive phrase to be parenthesized.
         // We will attach it to description of the extensions.  For example, if the extensions
         // given are s and asm and the description is "Assembler Programs" the full description
-        // generated here will be "Assembler Programs (*.s; *.asm)"
+        // generated here will be "Assembler Programs (*.s; *.s)"
         private String buildFullDescription(String description, ArrayList extensions) {
             String result = (description == null) ? "" : description;
             if (extensions.size() > 0) {

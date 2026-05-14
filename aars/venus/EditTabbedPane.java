@@ -336,7 +336,7 @@ public class EditTabbedPane extends JTabbedPane {
             while (!operationOK) {
                 // Set Save As dialog directory in a logical way.  If file in
                 // edit pane had been previously saved, default to its directory.
-                // If a new file (mipsN.asm), default to current save directory.
+                // If a new file (mipsN.s), default to current save directory.
                 // DPS 13-July-2011
                 if (editPane.isNew()) {
                     saveDialog = new JFileChooser(editor.getCurrentSaveDirectory());

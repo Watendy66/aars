@@ -107,7 +107,7 @@ public final class TokenTypes {
             return TokenTypes.ERROR;
 
         // See if it is a comment
-        if (value.charAt(0) == ';')
+        if (value.charAt(0) == ';' || value.charAt(0) == '@' || value.startsWith("//"))
             return TokenTypes.COMMENT;
 
         // See if it is one of the simple tokens
