@@ -55,8 +55,8 @@ public class SyscallReadString extends AbstractSyscall {
     public void simulate(ProgramStatement statement) throws ProcessingException {
 
         String inputString = "";
-        int buf = RegisterFile.getValue(4); // buf addr in $a0
-        int maxLength = RegisterFile.getValue(5) - 1; // $a1
+        int buf = RegisterFile.getValue(0); // buf addr in $a0
+        int maxLength = RegisterFile.getValue(1) - 1; // $a1
         boolean addNullByte = true;
         // Guard against negative maxLength.  DPS 13-July-2011
         if (maxLength < 0) {

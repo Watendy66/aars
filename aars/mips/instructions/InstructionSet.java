@@ -167,15 +167,24 @@ public class InstructionSet {
                    //cond 00 I 1010 1 Rn(the first operand) SBZ   shifter_operand
                     new SimulationCode() {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
-                        int[] operands = statement.getOperands();
-                        int cp1 = RegisterFile.getValue(operands[0]);
-                        int cp2 = RegisterFile.getValue(operands[1]);
-                            if(cp1 == cp2){
-                                RegisterFile.set_CPSR_Z();
-                            }
-                            else{
-                                    RegisterFile.reset_CPSR_Z();
-                                }
+                            int[] operands = statement.getOperands();
+                            int op1 = RegisterFile.getValue(operands[0]);
+                            int op2 = RegisterFile.getValue(operands[1]);
+                            long intResult=(long)op1-(long)op2;
+                            // N flag
+                            if (intResult < 0) RegisterFile.set_CPSR_N();
+                            else               RegisterFile.reset_CPSR_N();
+                            // Z flag
+                            if (intResult == 0) RegisterFile.set_CPSR_Z();
+                            else                RegisterFile.reset_CPSR_Z();
+                            // C flag: ARM CMP sets C=1 if no borrow (unsigned op1 >= unsigned op2)
+                            if (Integer.toUnsignedLong(op1) >= Integer.toUnsignedLong(op2))
+                                RegisterFile.set_CPSR_C();
+                            else RegisterFile.reset_CPSR_C();
+                            // V flag: signed overflow
+                            if (((op1 ^ op2) & (op1 ^ intResult)) < 0)
+                                RegisterFile.set_CPSR_V();
+                            else RegisterFile.reset_CPSR_V();
                         }
                     }));
 
@@ -186,15 +195,21 @@ public class InstructionSet {
                     "1110 00 0 1010 1 ssss                  0000  ffffffffffff", 
                     new SimulationCode() {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
-                        int[] operands = statement.getOperands();
-                        int cp1 = RegisterFile.getValue(operands[0]);
-                        int cp2 = operands[1];
-                            if(cp1 == cp2){
-                                RegisterFile.set_CPSR_Z();
-                            }
-                            else{
-                                    RegisterFile.reset_CPSR_Z();
-                                }
+                            int[] operands = statement.getOperands();
+                            int op1 = RegisterFile.getValue(operands[0]);
+                            int op2 = operands[1];
+                            long result = (long) op1 - (long) op2;
+                            int intResult = (int) result;
+                            if (intResult < 0) RegisterFile.set_CPSR_N();
+                            else               RegisterFile.reset_CPSR_N();
+                            if (intResult == 0) RegisterFile.set_CPSR_Z();
+                            else                RegisterFile.reset_CPSR_Z();
+                            if (Integer.toUnsignedLong(op1) >= Integer.toUnsignedLong(op2))
+                                RegisterFile.set_CPSR_C();
+                            else RegisterFile.reset_CPSR_C();
+                            if (((op1 ^ op2) & (op1 ^ intResult)) < 0)
+                                RegisterFile.set_CPSR_V();
+                            else RegisterFile.reset_CPSR_V();
                         }
                 }));
 
@@ -261,27 +276,6 @@ public class InstructionSet {
                                 RegisterFile.updateRegister(operands[0], dif);
                             }
                         }));
-            instructionList.add(
-                new BasicInstruction("sub r0,#-112",
-                        "SUB (2) subtracts a large immediate value from the value of a register and stores the result back in the same register.",
-                        BasicInstructionFormat.R_FORMAT,
-                        "1110 0010 0101  ssss ssss 0000 ffffffff",
-                        new SimulationCode() {
-                            public void simulate(ProgramStatement statement) throws ProcessingException {
-                                int[] operands = statement.getOperands();
-                                int sub1 = RegisterFile.getValue(operands[0]);
-                                int sub2 = operands[1];
-                                int dif = sub1 - sub2;
-                                if(dif<0)
-                                {
-                                    RegisterFile.set_CPSR_N();
-                                }
-                                else{
-                                    RegisterFile.reset_CPSR_N();
-                                }
-                                RegisterFile.updateRegister(operands[0], dif);
-                            }
-                        }));
           instructionList.add(
                 new BasicInstruction("sub r0,#-112",
                         "SUB (2) subtracts a large immediate value from the value of a register and stores the result back in the same register.",
@@ -335,7 +329,7 @@ public class InstructionSet {
                             int[] operands = statement.getOperands();
                             try {
                                 Globals.memory.setWord(
-                                        RegisterFile.getValue(operands[1])+(operands[2] << 16 >> 16),
+                                        RegisterFile.getValue(operands[1])+(operands[2] << 20 >> 20),
                                         RegisterFile.getValue(operands[0])
                                                     & 0xffffffff);
                                 } catch (AddressErrorException e) {
@@ -380,9 +374,9 @@ public class InstructionSet {
                                // int address = RegisterFile.getValue(operands[1]) + (operands[2] << 16 >> 16);
                                // int value_fetched_from_memory  =  Globals.memory.getWord(address);
 
-                                int value_fetched_from_memory = Globals.memory.getHalf(
+                                int value_fetched_from_memory = Globals.memory.getWord(
                                     RegisterFile.getValue(operands[1])
-                                            + (operands[2] << 16 >> 16));
+                                            + (operands[2] << 20 >> 20));
                                     RegisterFile.updateRegister(operands[0], value_fetched_from_memory);
                                
                             } catch (AddressErrorException e) {
@@ -401,7 +395,7 @@ public class InstructionSet {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
                                 try {
-                                     int value_fetched_from_memory = Globals.memory.getHalf(
+                                     int value_fetched_from_memory = Globals.memory.getWord(
                                     RegisterFile.getValue(operands[1]));
                                     RegisterFile.updateRegister(operands[0], value_fetched_from_memory);
                                    
@@ -421,7 +415,7 @@ public class InstructionSet {
                     public void simulate(ProgramStatement statement) throws ProcessingException {
                         int[] operands = statement.getOperands();
                         try {
-                                int value_fetched_from_memory = Globals.memory.getHalf(
+                                int value_fetched_from_memory = Globals.memory.getWord(
                             operands[1]);
                             RegisterFile.updateRegister(operands[0], value_fetched_from_memory);
                             
@@ -505,7 +499,7 @@ public class InstructionSet {
         new BasicInstruction("ble label",
                 "Branch if less than or equal : Z set, or N set and V clear, or N clear and V set (Z == 1 or N != V)",
                 BasicInstructionFormat.I_BRANCH_FORMAT,
-                "1010 101 0 ffffffffffffffffffffffff",
+                "1101 101 0 ffffffffffffffffffffffff",
                 new SimulationCode() {
                     public void simulate(ProgramStatement statement) throws ProcessingException {
                         int[] operands = statement.getOperands();
@@ -520,18 +514,16 @@ public class InstructionSet {
                     }
                 }));
         instructionList.add(
-            new BasicInstruction("bxeq label",
-                    "Branch if equal : Branch(jump to label) to label if zero flag is set",
-                    BasicInstructionFormat.I_BRANCH_FORMAT,
+            new BasicInstruction("bxeq r0",
+                    "Branch if equal : Branch(jump to ro) to ro if zero flag is set",
+                    BasicInstructionFormat.I_FORMAT,
                     "0000 101 0 ffffffffffffffffffffffff",
                     new SimulationCode() {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
                             int[] operands = statement.getOperands();
                             int zero = RegisterFile.get_CPSR_Z();
                             if (zero !=0 ) {
- 
-                                //processJump(RegisterFile.getProgramCounter() + operands[0] - 4);
-                                processBranch(RegisterFile.getValue(operands[0]));
+                                 processJump(RegisterFile.getValue(operands[0]));
                             }
                         }
                     }));
@@ -547,14 +539,14 @@ public class InstructionSet {
                         }
                     }));
         instructionList.add(
-            new BasicInstruction("bx label",
-                    "Branch unconditionally to label",
-                    BasicInstructionFormat.I_BRANCH_FORMAT,
+            new BasicInstruction("bx r0",
+                    "Branch and exchange: jump to address in register (used for function return)",
+                    BasicInstructionFormat.I_FORMAT,
                     "1110  101 0 ffffffffffffffffffffffff",
                     new SimulationCode() {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
                             int[] operands = statement.getOperands();
-                            processBranch(RegisterFile.getValue(operands[0]));
+                            processJump(RegisterFile.getValue(operands[0]));
                         }
                     }));
         instructionList.add(
@@ -565,11 +557,14 @@ public class InstructionSet {
                     new SimulationCode() {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
                             int[] operands = statement.getOperands();
+                            // 保存返回地址到 LR (R14)
+                            RegisterFile.updateRegister(14, RegisterFile.getProgramCounter());
                             processBranch(operands[0]);
                             }
                     }));
-            instructionList.add(
-        new BasicInstruction("syscall",
+
+        instructionList.add(
+            new BasicInstruction("syscall",
                 "Issue a system call : Execute the system call specified by value in r2",
                 BasicInstructionFormat.R_FORMAT,
                 "000000 00000 00000 00000 00000 001100",
@@ -591,7 +586,7 @@ public class InstructionSet {
                             // 12 bit immediate value in operands[2] is sign-extended
                             RegisterFile.updateRegister(operands[0],
                                     RegisterFile.getValue(operands[1])
-                                            & (operands[2] << 20 >> 20));
+                                            & (operands[2]));
                         }
                     }));
         instructionList.add(
@@ -606,7 +601,7 @@ public class InstructionSet {
                             // 12 bit immediate value in operands[2] is sign-extended
                             RegisterFile.updateRegister(operands[0],
                                     RegisterFile.getValue(operands[1])
-                                            & (RegisterFile.getValue(operands[2]) << 20 >> 20));
+                                            & (RegisterFile.getValue(operands[2])));
                         }
                     }));
         instructionList.add(
@@ -621,7 +616,7 @@ public class InstructionSet {
                             // 12 bit immediate value in operands[2] is sign-extended
                             RegisterFile.updateRegister(operands[0],
                                     RegisterFile.getValue(operands[1])
-                                            | (operands[2] << 20 >> 20));
+                                            | (operands[2]));
                         }
                     }));
 
@@ -637,7 +632,7 @@ public class InstructionSet {
                             // 12 bit immediate value in operands[2] is sign-extended
                             RegisterFile.updateRegister(operands[0],
                                     RegisterFile.getValue(operands[1])
-                                            | (RegisterFile.getValue(operands[2]) << 20 >> 20));
+                                            | (RegisterFile.getValue(operands[2])));
                         }
                     }));
 
@@ -654,7 +649,7 @@ public class InstructionSet {
                             // 12 bit immediate value in operands[2] is sign-extended
                             RegisterFile.updateRegister(operands[0],
                                     RegisterFile.getValue(operands[1])
-                                            ^ (RegisterFile.getValue(operands[2]) << 20 >> 20));
+                                            ^ (RegisterFile.getValue(operands[2])));
                         }
                     }));
         instructionList.add(
@@ -670,10 +665,35 @@ public class InstructionSet {
                             // 12 bit immediate value in operands[2] is sign-extended
                             RegisterFile.updateRegister(operands[0],
                                     RegisterFile.getValue(operands[1])
-                                            ^ (operands[2] << 20 >> 20));
+                                            ^ (operands[2]));
+                        }
+                    }));
+        instructionList.add(
+            new BasicInstruction("lsl r0,r1,#5",
+                    "LSL (Logical Shift Left) by immediate: Rd = Rn << #imm",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1110 0001 1010 0000 ffff tttt 000 sssss",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            RegisterFile.updateRegister(operands[0],
+                                    RegisterFile.getValue(operands[1]) << operands[2]);
                         }
                     }));
 
+        instructionList.add(
+            new BasicInstruction("lsl r0,r1,r2",
+                    "LSL (Logical Shift Left) by register: Rd = Rn << Rs",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1110 0001 1010 0000 ffff ssss 0001 tttt",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int shiftAmt = RegisterFile.getValue(operands[2]) & 0x1F;
+                            RegisterFile.updateRegister(operands[0],
+                                    RegisterFile.getValue(operands[1]) << shiftAmt);
+                        }
+                    }));
 
 
 

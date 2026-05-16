@@ -62,7 +62,7 @@ public class SyscallInputDialogString extends AbstractSyscall {
 
 
         String message = new String(); // = "";
-        int byteAddress = RegisterFile.getValue(4); // byteAddress of string is in $a0
+        int byteAddress = RegisterFile.getValue(0); // byteAddress of string is in $a0
         char ch[] = {' '}; // Need an array to convert to String
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);
@@ -82,8 +82,8 @@ public class SyscallInputDialogString extends AbstractSyscall {
         // means that OK was chosen but no string was input.
         String inputString = null;
         inputString = JOptionPane.showInputDialog(message);
-        byteAddress = RegisterFile.getValue(5); // byteAddress of string is in $a1
-        int maxLength = RegisterFile.getValue(6); // input buffer size for input string is in $a2
+        byteAddress = RegisterFile.getValue(1); // byteAddress of string is in $a1
+        int maxLength = RegisterFile.getValue(2); // input buffer size for input string is in $a2
 
         try {
             if (inputString == null)  // Cancel was chosen

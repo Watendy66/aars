@@ -52,6 +52,6 @@ public class SyscallPrintIntUnsigned extends AbstractSyscall {
      */
     public void simulate(ProgramStatement statement) throws ProcessingException {
         SystemIO.printString(
-                Binary.unsignedIntToIntString(RegisterFile.getValue(4)));
+                Binary.unsignedIntToIntString(RegisterFile.getValue(0)));
     }
 }

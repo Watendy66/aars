@@ -55,7 +55,7 @@ public class SyscallMessageDialogString extends AbstractSyscall {
         // Output: none
 
         String message = new String(); // = "";
-        int byteAddress = RegisterFile.getValue(4);
+        int byteAddress = RegisterFile.getValue(0);
         char ch[] = {' '}; // Need an array to convert to String
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);
@@ -71,7 +71,7 @@ public class SyscallMessageDialogString extends AbstractSyscall {
 
 
         String message2 = new String(); // = "";
-        byteAddress = RegisterFile.getValue(5);
+        byteAddress = RegisterFile.getValue(1);
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);
             while (ch[0] != 0) // only uses single location ch[0]

@@ -139,7 +139,7 @@ public final class TokenTypes {
         // See if it is a register
         Register reg = RegisterFile.getUserRegister(value);
         if (reg != null)
-            if (reg.getName().equals(value))
+            if (reg.getName().equalsIgnoreCase(value))
                 return TokenTypes.REGISTER_NAME;
             else
                 return TokenTypes.REGISTER_NUMBER;

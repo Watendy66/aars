@@ -54,11 +54,11 @@ public class SyscallWrite extends AbstractSyscall {
      * and $a2 specifies length.  Number of characters written is returned in $v0, starting in MARS 3.7.
      */
     public void simulate(ProgramStatement statement) throws ProcessingException {
-        int byteAddress = RegisterFile.getValue(5); // source of characters to write to file
+        int byteAddress = RegisterFile.getValue(1); // source of characters to write to file
         byte b = 0;
-        int reqLength = RegisterFile.getValue(6); // user-requested length
+        int reqLength = RegisterFile.getValue(2); // user-requested length
         int index = 0;
-        byte myBuffer[] = new byte[RegisterFile.getValue(6) + 1]; // specified length plus null termination
+        byte myBuffer[] = new byte[RegisterFile.getValue(2) + 1]; // specified length plus null termination
         try {
             b = (byte) Globals.memory.getByte(byteAddress);
             while (index < reqLength) // Stop at requested length. Null bytes are included.
@@ -75,9 +75,9 @@ public class SyscallWrite extends AbstractSyscall {
             throw new ProcessingException(statement, e);
         }
         int retValue = SystemIO.writeToFile(
-                RegisterFile.getValue(4), // fd
+                RegisterFile.getValue(0), // fd
                 myBuffer, // buffer
-                RegisterFile.getValue(6)); // length
+                RegisterFile.getValue(2)); // length
         RegisterFile.updateRegister(2, retValue); // set returned value in register
 
         // Getting rid of processing exception.  It is the responsibility of the

@@ -273,7 +273,7 @@ public class RegisterFile {
     public static int getNumber(String n) {
         int j = -1;
         for (int i = 0; i < regFile.length; i++) {
-            if (regFile[i].getName().equals(n)) {
+            if (regFile[i].getName().equalsIgnoreCase(n)) {
                 j = regFile[i].getNumber();
                 break;
             }
@@ -305,13 +305,13 @@ public class RegisterFile {
                 // check for register [x + (number 0-31)].
                 try {
                     int i = Binary.stringToInt(Rname.substring(1));
-                    if (Rname.charAt(0) == 'r' && i >= 0 && i <= 15)
+                     if ((c == 'r' || c == 'R') && i >= 0 && i <= 15)
                         reg = regFile[i];
                     else{
                         reg = null; // just to be sure
                     // just do linear search; there aren't that many registers
                         for (int j = 0; j < regFile.length; j++) {
-                            if (Rname.equals(regFile[j].getName())) {
+                            if (Rname.equalsIgnoreCase(regFile[j].getName())) {
                                 reg = regFile[j];
                                 break;
                             }
@@ -322,7 +322,7 @@ public class RegisterFile {
                     reg = null; // just to be sure
                     // just do linear search; there aren't that many registers
                         for (int j = 0; j < regFile.length; j++) {
-                            if (Rname.equals(regFile[j].getName())) {
+                            if (Rname.equalsIgnoreCase(regFile[j].getName())) {
                                 reg = regFile[j];
                                 break;
                             }

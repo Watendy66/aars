@@ -53,7 +53,7 @@ public class SyscallSleep extends AbstractSyscall {
         // Input arguments: $a0 is the length of time to sleep in milliseconds.
 
         try {
-            Thread.sleep(RegisterFile.getValue(4)); // units of milliseconds  1000 millisec = 1 sec.
+            Thread.sleep(RegisterFile.getValue(0)); // units of milliseconds  1000 millisec = 1 sec.
         } catch (InterruptedException e) {
             return; // no exception handling
         }

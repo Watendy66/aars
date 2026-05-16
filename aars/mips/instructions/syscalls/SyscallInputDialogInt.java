@@ -60,7 +60,7 @@ public class SyscallInputDialogInt extends AbstractSyscall {
 
 
         String message = new String(); // = "";
-        int byteAddress = RegisterFile.getValue(4);
+        int byteAddress = RegisterFile.getValue(0);
         char ch[] = {' '}; // Need an array to convert to String
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);
@@ -82,22 +82,22 @@ public class SyscallInputDialogInt extends AbstractSyscall {
         inputValue = JOptionPane.showInputDialog(message);
         if (inputValue == null)  // Cancel was chosen
         {
-            RegisterFile.updateRegister(4, 0);  // set $a0 to zero
+            RegisterFile.updateRegister(0, 0);  // set $a0 to zero
             RegisterFile.updateRegister(5, -2);  // set $a1 to -2 flag
         } else if (inputValue.length() == 0)  // OK was chosen but there was no input
         {
-            RegisterFile.updateRegister(4, 0);  // set $a0 to zero
+            RegisterFile.updateRegister(0, 0);  // set $a0 to zero
             RegisterFile.updateRegister(5, -3);  // set $a1 to -3 flag
         } else {
             try {
                 int i = Integer.parseInt(inputValue);
 
                 // Successful parse of valid input data
-                RegisterFile.updateRegister(4, i);  // set $a0 to the data read
+                RegisterFile.updateRegister(0, i);  // set $a0 to the data read
                 RegisterFile.updateRegister(5, 0);  // set $a1 to valid flag
             } catch (NumberFormatException e) {
                 // Unsuccessful parse of input data
-                RegisterFile.updateRegister(4, 0);  // set $a0 to zero
+                RegisterFile.updateRegister(0, 0);  // set $a0 to zero
                 RegisterFile.updateRegister(5, -1);  // set $a1 to -1 flag
 
             }

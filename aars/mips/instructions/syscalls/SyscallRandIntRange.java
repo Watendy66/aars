@@ -58,14 +58,14 @@ public class SyscallRandIntRange extends AbstractSyscall {
         //    $a1 = the upper bound of range of returned values.
         // Return: $a0 = the next pseudorandom, uniformly distributed int value from this
         // random number generator's sequence.
-        Integer index = new Integer(RegisterFile.getValue(4));
+        Integer index = new Integer(RegisterFile.getValue(0));
         Random stream = (Random) RandomStreams.randomStreams.get(index);
         if (stream == null) {
             stream = new Random(); // create a non-seeded stream
             RandomStreams.randomStreams.put(index, stream);
         }
         try {
-            RegisterFile.updateRegister(4, stream.nextInt(RegisterFile.getValue(5)));
+            RegisterFile.updateRegister(0, stream.nextInt(RegisterFile.getValue(1)));
         } catch (IllegalArgumentException iae) {
             throw new ProcessingException(statement,
                     "Upper bound of range cannot be negative (syscall " + this.getNumber() + ")",

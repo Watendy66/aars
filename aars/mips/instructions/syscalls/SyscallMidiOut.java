@@ -66,9 +66,9 @@ public class SyscallMidiOut extends AbstractSyscall {
      * use the range 1-128.
      */
     public void simulate(ProgramStatement statement) throws ProcessingException {
-        int pitch = RegisterFile.getValue(4); // $a0
-        int duration = RegisterFile.getValue(5); // $a1
-        int instrument = RegisterFile.getValue(6); // $a2
+        int pitch = RegisterFile.getValue(0); // $a0
+        int duration = RegisterFile.getValue(1); // $a1
+        int instrument = RegisterFile.getValue(2); // $a2
         int volume = RegisterFile.getValue(7); // $a3
         if (pitch < rangeLowEnd || pitch > rangeHighEnd) pitch = ToneGenerator.DEFAULT_PITCH;
         if (duration < 0) duration = ToneGenerator.DEFAULT_DURATION;
