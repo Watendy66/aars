@@ -81,7 +81,7 @@ public class MIPSTokenMarker extends TokenMarker {
 
     public static KeywordMap getKeywords() {
         if (cKeywords == null) {
-            cKeywords = new KeywordMap(false);
+            cKeywords = new KeywordMap(true);
             // add Instruction mnemonics
             java.util.ArrayList instructionSet = aars.Globals.instructionSet.getInstructionList();
             for (int i = 0; i < instructionSet.size(); i++) {

@@ -57,13 +57,13 @@ public class SyscallRead extends AbstractSyscall {
         int byteAddress = RegisterFile.getValue(1); // destination of characters read from file
         byte b = 0;
         int index = 0;
-        byte myBuffer[] = new byte[RegisterFile.getValue(2)]; // specified length
+        byte myBuffer[] = new byte[RegisterFile.getValue(3)]; // specified length
         // Call to SystemIO.xxxx.read(xxx,xxx,xxx)  returns actual length
         int retLength = SystemIO.readFromFile(
                 RegisterFile.getValue(0), // fd
                 myBuffer, // buffer
-                RegisterFile.getValue(2)); // length
-        RegisterFile.updateRegister(2, retLength); // set returned value in register
+                RegisterFile.getValue(3)); // length
+        RegisterFile.updateRegister(0, retLength); // set returned value in register
 
         // Getting rid of processing exception.  It is the responsibility of the
         // user program to check the syscall's return value.  MARS should not

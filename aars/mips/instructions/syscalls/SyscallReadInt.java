@@ -59,7 +59,7 @@ public class SyscallReadInt extends AbstractSyscall {
                     "invalid integer input (syscall " + this.getNumber() + ")",
                     Exceptions.SYSCALL_EXCEPTION);
         }
-        RegisterFile.updateRegister(2, value);
+        RegisterFile.updateRegister(0, value);
     }
 
 }

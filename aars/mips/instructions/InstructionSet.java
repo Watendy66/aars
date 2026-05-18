@@ -94,7 +94,7 @@ public class InstructionSet {
             new BasicInstruction("mov r0, #-112", 
             "MOV (Move) writes a value to the destination register. The value can be either an immediate value or a value from a register, and can be shifted before the write.",
                     BasicInstructionFormat.I_FORMAT,
-                    "1110 00111011 0000 ssss 0000 ffffffff", 
+                    "11011101 ssss ffffffffffffffffffff", 
                     new SimulationCode() {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
                         int[] operands = statement.getOperands();
@@ -102,17 +102,7 @@ public class InstructionSet {
                         RegisterFile.updateRegister(operands[0], num);
                                             }
                                         }));
-        instructionList.add(
-            new BasicInstruction("mov r1,#100020",
-            "MOV (Move) writes a value to the destination register. The value can be either an immediate value or a value from a register, and can be shifted before the write.",
-                    BasicInstructionFormat.U_FORMAT,
-                    "ssssssssssssssssssss fffff 01101 11",
-                    new SimulationCode() {
-                        public void simulate(ProgramStatement statement) throws ProcessingException {
-                            int[] operands = statement.getOperands();
-                            RegisterFile.updateRegister(operands[0], operands[1] << 12);
-                        }
-                    }));
+
         instructionList.add(
             new BasicInstruction("mov r1,label",
             "MOV (Move) writes a value to the destination register. The value can be either an immediate value or a value from a register, and can be shifted before the write.",
@@ -170,7 +160,8 @@ public class InstructionSet {
                             int[] operands = statement.getOperands();
                             int op1 = RegisterFile.getValue(operands[0]);
                             int op2 = RegisterFile.getValue(operands[1]);
-                            long intResult=(long)op1-(long)op2;
+                            long longResult=(long)op1-(long)op2;
+                            int intResult=(int)longResult;
                             // N flag
                             if (intResult < 0) RegisterFile.set_CPSR_N();
                             else               RegisterFile.reset_CPSR_N();
@@ -212,7 +203,32 @@ public class InstructionSet {
                             else RegisterFile.reset_CPSR_V();
                         }
                 }));
-
+        // 在现有 "cmp r0, #-112" 注册之后紧跟加入：
+        instructionList.add(
+            new BasicInstruction("cmp r0,#100020",
+                "CMP large immediate: compare register with large unsigned immediate.",
+                BasicInstructionFormat.U_FORMAT,
+                "ssssssssssssssssssss fffff 11010 11",
+                // s=20位立即数  f=5位寄存器  11010 11=固定位（与mov区分）
+                new SimulationCode() {
+                    public void simulate(ProgramStatement statement) throws ProcessingException {
+                        int[] operands = statement.getOperands();
+                        int op1 = RegisterFile.getValue(operands[0]);
+                        int op2 = operands[1];                    // 直接复用，逻辑完全一样
+                        long result = (long) op1 - (long) op2;
+                        int intResult = (int) result;
+                        if (intResult < 0) RegisterFile.set_CPSR_N();
+                        else               RegisterFile.reset_CPSR_N();
+                        if (intResult == 0) RegisterFile.set_CPSR_Z();
+                        else                RegisterFile.reset_CPSR_Z();
+                        if (Integer.toUnsignedLong(op1) >= Integer.toUnsignedLong(op2))
+                            RegisterFile.set_CPSR_C();
+                        else RegisterFile.reset_CPSR_C();
+                        if (((op1 ^ op2) & (op1 ^ intResult)) < 0)
+                            RegisterFile.set_CPSR_V();
+                        else RegisterFile.reset_CPSR_V();
+                    }
+                }));
         instructionList.add(
             new BasicInstruction("add r0,r1,#-112",
                     "ADD (1) adds a small constant value to the value of a register and stores the result in a second register.It updates the condition code flags, based on the result.",
@@ -241,6 +257,7 @@ public class InstructionSet {
                             RegisterFile.updateRegister(operands[0], sum);
                         }
                     }));
+
         instructionList.add(
                 new BasicInstruction("add r0,r1,r2",
                         "ADD (3) adds the value of one register to the value of a second register, and stores the result in a third register.It updates the condition code flags, based on the result.",
@@ -256,27 +273,26 @@ public class InstructionSet {
                             }
                         }));
         instructionList.add(
-                new BasicInstruction("sub r0,r1,#-112",
-                        "SUB (1) (Subtract) subtracts a small constant value from the value of a register and stores the result in a second register.",
-                        BasicInstructionFormat.R_FORMAT,
-                        "1110 00 0 0010 1  tttt ssss ffffffffffff",
-                        new SimulationCode() {
-                            public void simulate(ProgramStatement statement) throws ProcessingException {
-                                int[] operands = statement.getOperands();
-                                int sub1 = RegisterFile.getValue(operands[1]);
-                                int sub2 = operands[2];
-                                int dif = sub1 - sub2;
-                                if(dif<0)
-                                {
-                                    RegisterFile.set_CPSR_N();
+                    new BasicInstruction("sub r0,r1,#-112",
+                            "SUB (1) (Subtract) subtracts a small constant value from the value of a register and stores the result in a second register.",
+                            BasicInstructionFormat.R_FORMAT,
+                            "1110 00 0 0010 1  tttt ssss ffffffffffff",
+                            new SimulationCode() {
+                                public void simulate(ProgramStatement statement) throws ProcessingException {
+                                    int[] operands = statement.getOperands();
+                                    int sub1 = RegisterFile.getValue(operands[1]);
+                                    int sub2 = operands[2];
+                                    int dif = (int)((long)sub1 - (long)sub2);                      
+                                    if (dif < 0)  RegisterFile.set_CPSR_N(); else RegisterFile.reset_CPSR_N();
+                                    if (dif == 0) RegisterFile.set_CPSR_Z(); else RegisterFile.reset_CPSR_Z();
+                                    if (Integer.toUnsignedLong(sub1) >= Integer.toUnsignedLong(sub2))
+                                        RegisterFile.set_CPSR_C(); else RegisterFile.reset_CPSR_C();
+                                    if (((sub1 ^ sub2) & (sub1 ^ dif)) < 0)
+                                        RegisterFile.set_CPSR_V(); else RegisterFile.reset_CPSR_V();
+                                    RegisterFile.updateRegister(operands[0], dif);
                                 }
-                                else{
-                                    RegisterFile.reset_CPSR_N();
-                                }
-                                RegisterFile.updateRegister(operands[0], dif);
-                            }
-                        }));
-          instructionList.add(
+                            }));
+        instructionList.add(
                 new BasicInstruction("sub r0,#-112",
                         "SUB (2) subtracts a large immediate value from the value of a register and stores the result back in the same register.",
                         BasicInstructionFormat.R_FORMAT,
@@ -285,18 +301,18 @@ public class InstructionSet {
                             public void simulate(ProgramStatement statement) throws ProcessingException {
                                 int[] operands = statement.getOperands();
                                 int sub1 = RegisterFile.getValue(operands[0]);
-                                int sub2 = operands[1];
-                                int dif = sub1 - sub2;
-                                if(dif<0)
-                                {
-                                    RegisterFile.set_CPSR_N();
-                                }
-                                else{
-                                    RegisterFile.reset_CPSR_N();
-                                }
+                                int sub2 = operands[1];                              
+                                int dif = (int)((long)sub1 - (long)sub2);
+                                if (dif < 0)  RegisterFile.set_CPSR_N(); else RegisterFile.reset_CPSR_N();
+                                if (dif == 0) RegisterFile.set_CPSR_Z(); else RegisterFile.reset_CPSR_Z();
+                                if (Integer.toUnsignedLong(sub1) >= Integer.toUnsignedLong(sub2))
+                                    RegisterFile.set_CPSR_C(); else RegisterFile.reset_CPSR_C();
+                                if (((sub1 ^ sub2) & (sub1 ^ dif)) < 0)
+                                    RegisterFile.set_CPSR_V(); else RegisterFile.reset_CPSR_V();
                                 RegisterFile.updateRegister(operands[0], dif);
                             }
                         }));
+
         instructionList.add(
             new BasicInstruction("sub r0,r1,r2",
                     "SUB (3) subtracts the value of one register from the value of a second register and stores the result in a third register.",
@@ -306,15 +322,14 @@ public class InstructionSet {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
                             int[] operands = statement.getOperands();
                             int sub1 = RegisterFile.getValue(operands[1]);
-                            int sub2 = RegisterFile.getValue(operands[2]);
-                            int dif = sub1 - sub2;
-                            if(dif<0)
-                                {
-                                    RegisterFile.set_CPSR_N();
-                                }
-                            else{
-                                RegisterFile.reset_CPSR_N();
-                            }
+                            int sub2 = RegisterFile.getValue(operands[2]);                            
+                            int dif = (int)((long)sub1 - (long)sub2);
+                            if (dif < 0)  RegisterFile.set_CPSR_N(); else RegisterFile.reset_CPSR_N();
+                            if (dif == 0) RegisterFile.set_CPSR_Z(); else RegisterFile.reset_CPSR_Z();
+                            if (Integer.toUnsignedLong(sub1) >= Integer.toUnsignedLong(sub2))
+                                RegisterFile.set_CPSR_C(); else RegisterFile.reset_CPSR_C();
+                            if (((sub1 ^ sub2) & (sub1 ^ dif)) < 0)
+                                RegisterFile.set_CPSR_V(); else RegisterFile.reset_CPSR_V();                          
                             RegisterFile.updateRegister(operands[0], dif);
                         }
                     }));
@@ -371,7 +386,7 @@ public class InstructionSet {
                         public void simulate(ProgramStatement statement) throws ProcessingException {
                             int[] operands = statement.getOperands();                       
                             try {
-                               // int address = RegisterFile.getValue(operands[1]) + (operands[2] << 16 >> 16);
+                               // int address = RegisterFile.getValue(operands[1]) + (operands[2] << 20>> 20);
                                // int value_fetched_from_memory  =  Globals.memory.getWord(address);
 
                                 int value_fetched_from_memory = Globals.memory.getWord(
@@ -589,6 +604,7 @@ public class InstructionSet {
                                             & (operands[2]));
                         }
                     }));
+
         instructionList.add(
             new BasicInstruction("and r1,r2,r3",
             "AND performs a bitwise AND of two values. The first value comes from a register. The second value can be either an immediate value or a value from a register, and can be shifted before the AND operation.",
@@ -668,6 +684,7 @@ public class InstructionSet {
                                             ^ (operands[2]));
                         }
                     }));
+
         instructionList.add(
             new BasicInstruction("lsl r0,r1,#5",
                     "LSL (Logical Shift Left) by immediate: Rd = Rn << #imm",
@@ -695,12 +712,252 @@ public class InstructionSet {
                         }
                     }));
 
+        // 1. bne label（Branch if Not Equal，Z==0）,2026.5.17新补充指令
+        instructionList.add(
+            new BasicInstruction("bne label",
+                "Branch if not equal: branch if Z flag is clear",
+                BasicInstructionFormat.I_BRANCH_FORMAT,
+                "0001 101 0 ffffffffffffffffffffffff",
+                new SimulationCode() {
+                    public void simulate(ProgramStatement statement) throws ProcessingException {
+                        int[] operands = statement.getOperands();
+                        if (RegisterFile.get_CPSR_Z() == 0)
+                            processBranch(operands[0]);
+                    }
+                }));
 
+        // 2. lsr r0,r1,#5（Logical Shift Right，立即数）
+        instructionList.add(
+            new BasicInstruction("lsr r0,r1,#5",
+                "LSR (Logical Shift Right) by immediate: Rd = Rn >>> #imm",
+                BasicInstructionFormat.R_FORMAT,
+                "1110 0001 1010 0000 ffff tttt 001 sssss",
+                new SimulationCode() {
+                    public void simulate(ProgramStatement statement) throws ProcessingException {
+                        int[] operands = statement.getOperands();
+                        RegisterFile.updateRegister(operands[0],
+                            RegisterFile.getValue(operands[1]) >>> operands[2]);
+                    }
+                }));
 
-         
+        // 3. lsr r0,r1,r2（Logical Shift Right，寄存器）
+        instructionList.add(
+            new BasicInstruction("lsr r0,r1,r2",
+                "LSR (Logical Shift Right) by register: Rd = Rn >>> Rs",
+                BasicInstructionFormat.R_FORMAT,
+                "1110 0001 1010 0000 ffff ssss 0011 tttt",
+                new SimulationCode() {
+                    public void simulate(ProgramStatement statement) throws ProcessingException {
+                        int[] operands = statement.getOperands();
+                        int shiftAmt = RegisterFile.getValue(operands[2]) & 0x1F;
+                        RegisterFile.updateRegister(operands[0],
+                            RegisterFile.getValue(operands[1]) >>> shiftAmt);
+                    }
+                }));
+
+        // 4. asr r0,r1,#5（Arithmetic Shift Right，立即数）
+        instructionList.add(
+            new BasicInstruction("asr r0,r1,#5",
+                "ASR (Arithmetic Shift Right) by immediate: Rd = Rn >> #imm (sign-extending)",
+                BasicInstructionFormat.R_FORMAT,
+                "1110 0001 1010 0000 ffff tttt 010 sssss",
+                new SimulationCode() {
+                    public void simulate(ProgramStatement statement) throws ProcessingException {
+                        int[] operands = statement.getOperands();
+                        RegisterFile.updateRegister(operands[0],
+                            RegisterFile.getValue(operands[1]) >> operands[2]);
+                    }
+                }));
+
+        // 5. mul r0,r1,r2
+        instructionList.add(
+            new BasicInstruction("mul r0,r1,r2",
+                "MUL (Multiply) multiplies two register values and stores the lower 32 bits.",
+                BasicInstructionFormat.R_FORMAT,
+                "1110 0000 0000 ffff 0000 ssss 1001 tttt",
+                new SimulationCode() {
+                    public void simulate(ProgramStatement statement) throws ProcessingException {
+                        int[] operands = statement.getOperands();
+                        RegisterFile.updateRegister(operands[0],
+                            RegisterFile.getValue(operands[1]) * RegisterFile.getValue(operands[2]));
+                    }
+                }));
+
+         //6. ===== PUSH r0 =====
+        // 等价于：SP = SP - 4; mem[SP] = Rx
+        instructionList.add(
+            new BasicInstruction("push r0",
+                    "PUSH: decrement SP by 4, then store register to [SP].",
+                    BasicInstructionFormat.I_FORMAT,
+                    "11000001 0000 0000 0000 ffff 00000000",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int sp = RegisterFile.getValue(13) - 4;   // SP-=4
+                            RegisterFile.updateRegister(13, sp);
+                            try {
+                                Globals.memory.setWord(sp,
+                                    RegisterFile.getValue(operands[0]) & 0xffffffff);
+                            } catch (AddressErrorException e) {
+                                throw new ProcessingException(statement, e);
+                            }
+                        }
+                    }));
+
+        // 7.===== POP r0 =====
+        // 等价于：Rx = mem[SP]; SP = SP + 4
+        instructionList.add(
+            new BasicInstruction("pop r0",
+                    "POP: load register from [SP], then increment SP by 4.",
+                    BasicInstructionFormat.I_FORMAT,
+                    "11000010 0000 0000 0000 ffff 00000000",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int sp = RegisterFile.getValue(13);
+                            try {
+                                int val = Globals.memory.getWord(sp);
+                                RegisterFile.updateRegister(operands[0], val);
+                            } catch (AddressErrorException e) {
+                                throw new ProcessingException(statement, e);
+                            }
+                            RegisterFile.updateRegister(13, sp + 4);  // SP+=4
+                    }
+                }));
         //PC aligned to a four-byte problem is unsolved
 
+        //8.neg
+        instructionList.add(
+                new BasicInstruction("neg r0,r1",
+                        "NEG: Rd = 0 - Rn (取负)",
+                        BasicInstructionFormat.R_FORMAT,
+                        "1110 00111101 0000 ssss 00000000 ffff",
+                        new SimulationCode() {
+                            public void simulate(ProgramStatement statement) throws ProcessingException {
+                                int[] operands = statement.getOperands();
+                                int result = -RegisterFile.getValue(operands[1]);
+                                RegisterFile.updateRegister(operands[0], result);
+                            }
+                        }));
+        
+        //9. bic 寄存器形式
+        instructionList.add(
+            new BasicInstruction("bic r0,r1,r2",
+                    "BIC: Rd = Rn AND NOT Rm (按位清零)",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1110 0001 1100 tttt ssss 00000000 ffff",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            RegisterFile.updateRegister(operands[0],
+                                RegisterFile.getValue(operands[1]) & ~RegisterFile.getValue(operands[2]));
+                        }
+                    }));
 
+        //10. bic 立即数形式
+        instructionList.add(
+            new BasicInstruction("bic r0,r1,#112",
+                    "BIC immediate: Rd = Rn AND NOT #imm",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1101 tttt ssss ffffffffffffffffffff",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            RegisterFile.updateRegister(operands[0],
+                                RegisterFile.getValue(operands[1]) & ~operands[2]);
+                        }
+                    }));
+
+        // 11.tst 寄存器形式
+        instructionList.add(
+            new BasicInstruction("tst r0,r1",
+                    "TST: 计算 Rn AND Rm，只更新 N/Z 标志，不保存结果",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1110 0001 1000 0000 ssss 00000000 ffff",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int result = RegisterFile.getValue(operands[0])
+                                    & RegisterFile.getValue(operands[1]);
+                            if (result < 0) RegisterFile.set_CPSR_N();
+                            else            RegisterFile.reset_CPSR_N();
+                            if (result == 0) RegisterFile.set_CPSR_Z();
+                            else             RegisterFile.reset_CPSR_Z();
+                        }
+                    }));
+
+        // 12.tst 立即数形式
+        instructionList.add(
+            new BasicInstruction("tst r0,#112",
+                    "TST immediate: 计算 Rn AND #imm，只更新 N/Z 标志",
+                    BasicInstructionFormat.R_FORMAT,
+                    "11100101 ssss ffffffffffffffffffff",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int result = RegisterFile.getValue(operands[0]) & operands[1];
+                            if (result < 0) RegisterFile.set_CPSR_N();
+                            else            RegisterFile.reset_CPSR_N();
+                            if (result == 0) RegisterFile.set_CPSR_Z();
+                            else             RegisterFile.reset_CPSR_Z();
+                        }
+                    }));
+
+        // 13.teq 寄存器形式
+        instructionList.add(
+            new BasicInstruction("teq r0,r1",
+                    "TEQ: 计算 Rn EOR Rm，只更新 N/Z 标志，不保存结果",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1110 0001 0011 0000 ssss 00000000 ffff",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int result = RegisterFile.getValue(operands[0])
+                                    ^ RegisterFile.getValue(operands[1]);
+                            if (result < 0) RegisterFile.set_CPSR_N();
+                            else            RegisterFile.reset_CPSR_N();
+                            if (result == 0) RegisterFile.set_CPSR_Z();
+                            else             RegisterFile.reset_CPSR_Z();
+                        }
+                    }));
+
+        // 14.teq 立即数形式
+        instructionList.add(
+            new BasicInstruction("teq r0,#112",
+                    "TEQ immediate: 计算 Rn EOR #imm，只更新 N/Z 标志",
+                    BasicInstructionFormat.R_FORMAT,
+                    "11100110 ssss ffffffffffffffffffff",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int result = RegisterFile.getValue(operands[0]) ^ operands[1];
+                            if (result < 0) RegisterFile.set_CPSR_N();
+                            else            RegisterFile.reset_CPSR_N();
+                            if (result == 0) RegisterFile.set_CPSR_Z();
+                            else             RegisterFile.reset_CPSR_Z();
+                        }
+                    }));
+        
+        //15.swp
+        instructionList.add(
+            new BasicInstruction("swp r0,r1,[r2]",
+                    "SWP: 原子交换,Rd=mem[Rn], mem[Rn]=Rm",
+                    BasicInstructionFormat.R_FORMAT,
+                    "1110 0001 0000 ffff tttt 0000 1001 ssss",
+                    new SimulationCode() {
+                        public void simulate(ProgramStatement statement) throws ProcessingException {
+                            int[] operands = statement.getOperands();
+                            int addr = RegisterFile.getValue(operands[2]);
+                            try {
+                                int memVal = Globals.memory.getWord(addr);
+                                Globals.memory.setWord(addr,
+                                    RegisterFile.getValue(operands[1]) & 0xffffffff);
+                                RegisterFile.updateRegister(operands[0], memVal);
+                            } catch (AddressErrorException e) {
+                                throw new ProcessingException(statement, e);
+                            }
+                        }
+                    }));
         ////////////// READ PSEUDO-INSTRUCTION SPECS FROM DATA FILE AND ADD //////////////////////
         addPseudoInstructions();
 
@@ -767,8 +1024,7 @@ public class InstructionSet {
             StringTokenizer tokenizer;
             while ((line = in.readLine()) != null) {
                 // skip over: comment lines, empty lines, lines starting with blank.
-                if (!line.startsWith(";") && !line.startsWith(" ")
-                        && line.length() > 0) {
+            if (!line.startsWith(";") && !line.startsWith("//") && !line.startsWith("@")&& !line.startsWith(" ") && line.length() > 0)  {
                     description = "";
                     tokenizer = new StringTokenizer(line, "\t");
                     pseudoOp = tokenizer.nextToken();
@@ -776,11 +1032,13 @@ public class InstructionSet {
                     firstTemplate = null;
                     while (tokenizer.hasMoreTokens()) {
                         token = tokenizer.nextToken();
-                        if (token.startsWith(";")) {
-                            // Optional description must be last token in the line.
-                            description = token.substring(1);
+                        if (token.startsWith("//") || token.startsWith("@") || token.startsWith(";")) {
+                            if (token.startsWith("//"))
+                                description = token.substring(2);  // 跳过两个字符
+                            else
+                                description = token.substring(1);  // ; 和 @ 都是一个字符
                             break;
-                        }
+                        } 
                         if (token.startsWith("COMPACT")) {
                             // has second template for Compact (16-bit) memory config -- added DPS 3 Aug 2009
                             firstTemplate = template;
