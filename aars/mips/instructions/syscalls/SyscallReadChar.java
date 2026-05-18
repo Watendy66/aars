@@ -61,7 +61,7 @@ public class SyscallReadChar extends AbstractSyscall {
                     Exceptions.SYSCALL_EXCEPTION);
         }
         // DPS 20 June 2008: changed from 4 ($a0) to 2 ($v0)
-        RegisterFile.updateRegister(2, value);
+        RegisterFile.updateRegister(0, value);
     }
 
 }

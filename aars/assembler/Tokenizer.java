@@ -296,7 +296,22 @@ public class Tokenizer {
                     insideQuotedString = false;
                 }
             } else { // not inside a quoted string, so be sensitive to delimiters
+                if (c == '/' && linePos + 1 < line.length && line[linePos + 1] == '/') {
+                    // 和 ; 的处理逻辑完全一样，复制过来
+                    if (tokenPos > 0) {
+                        this.processCandidateToken(token, program, lineNum, theLine, tokenPos, tokenStartPos, result);
+                        tokenPos = 0;
+                    }
+                    tokenStartPos = linePos + 1;
+                    tokenPos = line.length - linePos;
+                    System.arraycopy(line, linePos, token, 0, tokenPos);
+                    this.processCandidateToken(token, program, lineNum, theLine, tokenPos, tokenStartPos, result);
+                    linePos = line.length;
+                    tokenPos = 0;
+                    break; // 或 continue，看原来的循环结构
+                }
                 switch (c) {
+                    case '@':
                     case ';':  // ; denotes comment that takes remainder of line
                         if (tokenPos > 0) {
                             this.processCandidateToken(token, program, lineNum, theLine, tokenPos, tokenStartPos, result);

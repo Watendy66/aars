@@ -56,7 +56,7 @@ public class SyscallMessageDialogDouble extends AbstractSyscall {
         // Output: none
 
         String message = new String(); // = "";
-        int byteAddress = RegisterFile.getValue(4);
+        int byteAddress = RegisterFile.getValue(0);
         char ch[] = {' '}; // Need an array to convert to String
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);

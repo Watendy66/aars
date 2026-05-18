@@ -48,18 +48,15 @@ public class RegisterFile {
     public static final int STACK_POINTER_REGISTER = 13;
     public static int INITIAL_CPSR_VALUE = 0x83000000;
     private static Register[] regFile =
-            {       new Register("a1", 0, 0), new Register("a2", 1, 0),
-                    new Register("a3", 2, 0), new Register("a4", 3, 0),
-                    new Register("v1", 4, 0), new Register("v2", 5, 0),
-                    new Register("v3", 6, 0), new Register("v4", 7, 0),
-                    new Register("v5", 8, 0), new Register("v6", 9, 0),
-                    new Register("sl", 10, 0), new Register("fp", 11, 0),
-                    new Register("ip", 12, Memory.globalPointer), new Register("sp", 13, Memory.stackPointer),
-                    new Register("lr", 14, 0), new Register("pc", 15, Memory.textBaseAddress),
+            {       new Register("R0",  0,  0), new Register("R1",  1,  0),
+                    new Register("R2",  2,  0), new Register("R3",  3,  0),
+                    new Register("R4",  4,  0), new Register("R5",  5,  0),
+                    new Register("R6",  6,  0), new Register("R7",  7,  0),
+                    new Register("R8",  8,  0), new Register("R9",  9,  0),
+                    new Register("R10", 10, 0), new Register("R11", 11, 0),
+                    new Register("R12", 12, Memory.globalPointer), new Register("SP", 13, Memory.stackPointer),
+                    new Register("LR",  14, 0), new Register("PC",  15, Memory.textBaseAddress),
 
-                    //new Register("gp", GLOBAL_POINTER_REGISTER, Memory.globalPointer),
-                    //new Register("sp", STACK_POINTER_REGISTER, Memory.stackPointer),
-                    //new Register("fp", 30, 0),new Register("ra", 31, 0)
             };
 
     private static Register CPSR = new Register("CPSR", 17,INITIAL_CPSR_VALUE);
@@ -145,7 +142,7 @@ public class RegisterFile {
     // reset the C Flag
     public static void reset_CPSR_C(){
         int value = CPSR.getValue();
-        if(get_CPSR_Z() == 0)
+        if(get_CPSR_C() == 0)
             return;
         value = value-4;
         CPSR.setValue(value);
@@ -154,7 +151,7 @@ public class RegisterFile {
     // reset the V Flag
     public static void reset_CPSR_V(){
         int value = CPSR.getValue();
-        if(get_CPSR_Z() == 0)
+        if(get_CPSR_V() == 0)
             return;
         value = value-8;
         CPSR.setValue(value);
@@ -182,7 +179,7 @@ public class RegisterFile {
     // set the C Flag
     public static void set_CPSR_C(){
         int value = CPSR.getValue();
-        if(get_CPSR_Z() == 1)
+        if(get_CPSR_C() == 1)
             return;
         value = value+4;
         CPSR.setValue(value);
@@ -191,7 +188,7 @@ public class RegisterFile {
     // set the V Flag
     public static void set_CPSR_V(){
         int value = CPSR.getValue();
-        if(get_CPSR_Z() == 1)
+        if(get_CPSR_V() == 1)
             return;
         value = value+8;
         CPSR.setValue(value);
@@ -235,15 +232,11 @@ public class RegisterFile {
      **/
 
     public static void updateRegister(String reg, int val) {
-        if (reg.equals("zero")) {
-            //System.out.println("You can not change the value of the zero register.");
-        } else {
-            for (int i = 0; i < regFile.length; i++) {
+        for (int i = 0; i < regFile.length; i++) {
                 if (regFile[i].getName().equals(reg)) {
                     updateRegister(i, val);
                     break;
                 }
-            }
         }
     }
 
@@ -280,7 +273,7 @@ public class RegisterFile {
     public static int getNumber(String n) {
         int j = -1;
         for (int i = 0; i < regFile.length; i++) {
-            if (regFile[i].getName().equals(n)) {
+            if (regFile[i].getName().equalsIgnoreCase(n)) {
                 j = regFile[i].getNumber();
                 break;
             }
@@ -307,17 +300,18 @@ public class RegisterFile {
 
     public static Register getUserRegister(String Rname) {
         Register reg = null;
-        if (Rname.charAt(0) >= 'a' || Rname.charAt(0) <= 'z') {
+        char c = Rname.charAt(0);        
+        if ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z'))  {
                 // check for register [x + (number 0-31)].
                 try {
                     int i = Binary.stringToInt(Rname.substring(1));
-                    if (Rname.charAt(0) == 'r' && i >= 0 && i <= 15)
+                     if ((c == 'r' || c == 'R') && i >= 0 && i <= 15)
                         reg = regFile[i];
                     else{
                         reg = null; // just to be sure
                     // just do linear search; there aren't that many registers
                         for (int j = 0; j < regFile.length; j++) {
-                            if (Rname.equals(regFile[j].getName())) {
+                            if (Rname.equalsIgnoreCase(regFile[j].getName())) {
                                 reg = regFile[j];
                                 break;
                             }
@@ -328,7 +322,7 @@ public class RegisterFile {
                     reg = null; // just to be sure
                     // just do linear search; there aren't that many registers
                         for (int j = 0; j < regFile.length; j++) {
-                            if (Rname.equals(regFile[j].getName())) {
+                            if (Rname.equalsIgnoreCase(regFile[j].getName())) {
                                 reg = regFile[j];
                                 break;
                             }

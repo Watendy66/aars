@@ -52,7 +52,7 @@ public class SyscallSbrk extends AbstractSyscall {
     public void simulate(ProgramStatement statement) throws ProcessingException {
         int address = 0;
         try {
-            address = Globals.memory.allocateBytesFromHeap(RegisterFile.getValue(4));
+            address = Globals.memory.allocateBytesFromHeap(RegisterFile.getValue(0));
         } catch (IllegalArgumentException iae) {
             throw new ProcessingException(statement,
                     iae.getMessage() + " (syscall " + this.getNumber() + ")",

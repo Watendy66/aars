@@ -38,8 +38,31 @@ README
 ## 4. Examples 
   (1. Open Aars.jar, find **Help→Aars→Examples**, where two example are presented.<br>
   (2. Open directory `.\asm_examples`. More examples will be found to implement Bubblesort and calculate fibonacci.<br>
+
 ## 5. Future Work
-  More pseudo-instrucions to be added.<br>
-  Syscall will be adjusted to follow the general use of register in ARM<br>
+  More pseudo-instrucions to be added.
   <br>
   Please feel free to contact us(jwx@bit.edu.cn), if you have any questions about this project.<br>
+
+## 6. Changelog
+### v1.1 (2026)
+**Bug Fixes**
+- **Duplicate instruction**: removed duplicate registration of `sub r0,#-112` in `InstructionSet.java`.
+- **LDR reads only 16 bits**: all three `ldr` variants changed from `getHalf()` to `getWord()`; offset sign-extension corrected from `<<16>>16` to `<<20>>20`.
+- **CMP incomplete flags**: `cmp` now sets all four CPSR flags (N/Z/C/V), restoring correct behaviour of `blt`, `bgt`, `bge`, `ble`.
+- **BL does not save return address**: `bl` now writes `PC+4` into LR (R14) before branching.
+- **BX uses relative jump**: `bx` changed from `processBranch` (relative) to `processJump` (absolute); syntax updated from `bx label` to `bx r0`.
+- **BXEQ uses relative jump**: same fix as BX above.
+
+**Syscall Register Alignment**
+- Arguments and return values now follow ARM convention: R0 (1st arg / return), R1 (2nd arg), R3 (3rd arg), R2 (syscall number). Updated across all 30 files in `syscalls/`.
+
+**New Instructions**
+- Added `lsl r0,r1,#imm` (immediate shift) and `lsl r0,r1,r2` (register shift).
+
+**Planned for next release**: `lsr`, `asr`, `mul`, `push`, `pop`, `bne`.
+
+**Syntax changes** (applied in Phase 1, prior to v1.1)
+- Comment character: `;` → `//`
+- File extension: `.asm` → `.s`
+- Register names: `a1/a2/v1…` → `R0–R12/SP/LR/PC`

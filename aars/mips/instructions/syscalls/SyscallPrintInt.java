@@ -51,6 +51,6 @@ public class SyscallPrintInt extends AbstractSyscall {
      */
     public void simulate(ProgramStatement statement) throws ProcessingException {
         SystemIO.printString(
-                new Integer(RegisterFile.getValue(4)).toString());
+                new Integer(RegisterFile.getValue(0)).toString());
     }
 }

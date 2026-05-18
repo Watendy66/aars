@@ -60,7 +60,7 @@ public class SyscallMessageDialog extends AbstractSyscall {
         // Output: none
 
         String message = new String(); // = "";
-        int byteAddress = RegisterFile.getValue(4);
+        int byteAddress = RegisterFile.getValue(0);
         char ch[] = {' '}; // Need an array to convert to String
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);
@@ -76,7 +76,7 @@ public class SyscallMessageDialog extends AbstractSyscall {
 
 
         // Display the dialog.
-        int msgType = RegisterFile.getValue(5);
+        int msgType = RegisterFile.getValue(1);
         if (msgType < 0 || msgType > 3)
             msgType = -1; // See values in http://java.sun.com/j2se/1.5.0/docs/api/constant-values.html
         JOptionPane.showMessageDialog(null, message, null, msgType);

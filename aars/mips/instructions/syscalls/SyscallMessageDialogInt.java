@@ -55,7 +55,7 @@ public class SyscallMessageDialogInt extends AbstractSyscall {
         // Output: none
 
         String message = new String(); // = "";
-        int byteAddress = RegisterFile.getValue(4);
+        int byteAddress = RegisterFile.getValue(0);
         char ch[] = {' '}; // Need an array to convert to String
         try {
             ch[0] = (char) Globals.memory.getByte(byteAddress);
@@ -72,7 +72,7 @@ public class SyscallMessageDialogInt extends AbstractSyscall {
 
         // Display the dialog.
         JOptionPane.showMessageDialog(null,
-                message + Integer.toString(RegisterFile.getValue(5)),
+                message + Integer.toString(RegisterFile.getValue(1)),
                 null,
                 JOptionPane.INFORMATION_MESSAGE);
 

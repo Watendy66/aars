@@ -81,7 +81,7 @@ public class MIPSTokenMarker extends TokenMarker {
 
     public static KeywordMap getKeywords() {
         if (cKeywords == null) {
-            cKeywords = new KeywordMap(false);
+            cKeywords = new KeywordMap(true);
             // add Instruction mnemonics
             java.util.ArrayList instructionSet = aars.Globals.instructionSet.getInstructionList();
             for (int i = 0; i < instructionSet.size(); i++) {
@@ -129,6 +129,13 @@ public class MIPSTokenMarker extends TokenMarker {
 
             switch (token) {
                 case Token.NULL:
+                    // 在 switch(c) 之前加
+                    if (c == '/' && i + 1 < length && array[i + 1]== '/') {
+                        addToken(i - lastOffset, token);
+                        addToken(length - i, Token.COMMENT1);
+                        lastOffset = lastKeyword = length;
+                        break loop;
+                    }
                     switch (c) {
                         case '"':
                             doKeyword(line, i, c);
@@ -184,6 +191,7 @@ public class MIPSTokenMarker extends TokenMarker {
                                 lastOffset = lastKeyword = i1;
                             }
                             break;
+                        case '@':
                         case ';':
                             backslash = false;
                             doKeyword(line, i, c);
